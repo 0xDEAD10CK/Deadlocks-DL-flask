@@ -1,7 +1,56 @@
 {% extends 'base.html' %}
 
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    <h1>Welcome to My Flask App</h1>
+<div class="container">
+    <h1>Deadlocks Downloader</h1>
+    <p class="subhead">Powered by <code>yt-dlp</code></p>
+
+    <form action="{{ url_for('main.home') }}" method="post">
+        <label for="url">Video URL:</label>
+        <input type="text" id="url" value="{{ video_url }}" name="url" required placeholder="https://...">
+
+        <label for="format">Choose Format:</label>
+        <select id="format" name="format">
+            <option value="best">Best Quality</option>
+            <option value="worst">Lowest Quality</option>
+            <option value="bestvideo+bestaudio">Best Video + Audio</option>
+            <option value="bestaudio">Audio Only</option>
+        </select>
+
+        <label>
+            <input type="checkbox" name="subtitles" value="yes">
+            Download Subtitles (if available)
+        </label>
+
+        <label>
+            <input type="checkbox" name="metadata" value="yes">
+            Embed Metadata
+        </label>
+
+        <label>
+            <input type="checkbox" name="thumbnail" value="yes">
+            Embed Thumbnail
+        </label>
+
+        <button type="submit">Download</button>
+    </form>
+
+    {% if error %}
+        <div class="error">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+
+    {% if success %}
+        <div class="success">
+            <strong>Success:</strong> {{ success }}
+        </div>
+    {% endif %}
+
+
+</div>
 {% endblock %}
