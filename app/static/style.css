@@ -71,3 +71,10 @@ button:hover {
     color: #00796b;
     word-break: break-word;
 }
+
+#progress-bar {
+    width: 0%;
+    height: 20px;
+    background: green;
+    border-radius: 5px;
+}

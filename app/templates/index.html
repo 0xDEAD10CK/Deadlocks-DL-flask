@@ -1,56 +1,157 @@
 {% extends 'base.html' %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 
-{% block title %}Home{% endblock %}
+{% block title %}Home{% endblock %} 
 
 {% block content %}
 <div class="container">
-    <h1>Deadlocks Downloader</h1>
-    <p class="subhead">Powered by <code>yt-dlp</code></p>
+  <h1>Deadlocks Downloader</h1>
+  <p class="subhead">Powered by <code>yt-dlp</code></p>
 
-    <form action="{{ url_for('main.home') }}" method="post">
-        <label for="url">Video URL:</label>
-        <input type="text" id="url" value="{{ video_url }}" name="url" required placeholder="https://...">
+  <!-- Form for user input -->
+  <form method="POST" onsubmit="startDownload(event)">
+    <!-- Input for video URL -->
+    <input
+      type="text"
+      name="url"
+      value="{{ video_url or '' }}"
+      placeholder="Enter Video URL"
+      required
+    />
 
-        <label for="format">Choose Format:</label>
-        <select id="format" name="format">
-            <option value="best">Best Quality</option>
-            <option value="worst">Lowest Quality</option>
-            <option value="bestvideo+bestaudio">Best Video + Audio</option>
-            <option value="bestaudio">Audio Only</option>
-        </select>
+    <!-- Checkbox for audio-only download -->
+    <label> <input type="checkbox" name="audio_only" /> Audio Only </label>
 
-        <label>
-            <input type="checkbox" name="subtitles" value="yes">
-            Download Subtitles (if available)
-        </label>
+    <!-- Input for custom filename -->
+    <label>
+      Custom Filename:
+      <input type="text" name="custom_filename" placeholder="Optional" />
+    </label>
 
-        <label>
-            <input type="checkbox" name="metadata" value="yes">
-            Embed Metadata
-        </label>
+    <!-- Dropdown for selecting resolution -->
+    <label>
+      Resolution:
+      <select name="resolution">
+        <option value="">Best Available</option>
+        <option value="1080">1080p</option>
+        <option value="720">720p</option>
+        <option value="480">480p</option>
+        <option value="360">360p</option>
+      </select>
+    </label>
 
-        <label>
-            <input type="checkbox" name="thumbnail" value="yes">
-            Embed Thumbnail
-        </label>
+    <!-- Checkbox for including chapters -->
+    <label> <input type="checkbox" name="chapters" /> Include Chapters </label>
 
-        <button type="submit">Download</button>
-    </form>
+    <!-- Checkbox for restricting filenames to safe ASCII -->
+    <label>
+      <input type="checkbox" name="restrictfilenames" /> Restrict Filenames
+      (Safe ASCII)
+    </label>
 
-    {% if error %}
-        <div class="error">
-            <strong>Error:</strong> {{ error }}
-        </div>
-    {% endif %}
+    <!-- Checkbox for keeping the original file -->
+    <label>
+      <input type="checkbox" name="keep_original" /> Keep Original File (No
+      Merge)
+    </label>
 
-    {% if success %}
-        <div class="success">
-            <strong>Success:</strong> {{ success }}
-        </div>
-    {% endif %}
+    <!-- Submit button -->
+    <button type="submit">Download</button>
+  </form>
 
+  <!-- Progress bar container -->
+  <div id="progress-bar-container" style="display: none">
+    <div id="progress-bar"></div>
+  </div>
+  <p id="progress-text">Idle</p>
 
+  <!-- Display error message if any -->
+  {% if error %}
+  <div class="error"><strong>Error:</strong> {{ error }}</div>
+  {% endif %} 
+
+  <!-- Display success message if any -->
+  {% if success %}
+  <div class="success"><strong>Success:</strong> {{ success }}</div>
+  {% endif %}
 </div>
+{% endblock %} 
+
+{% block scripts %}
+<script>
+  // Select the form element
+  const form = document.querySelector("form");
+  console.log("Form:", form); // Debugging log to check if form is null
+
+  let progressInterval;
+
+  // Function to poll the server for download progress
+  const pollProgress = () => {
+    console.log("Polling...");
+    fetch("/progress")
+      .then((response) => response.json())
+      .then((data) => {
+        const bar = document.getElementById("progress-bar");
+        const container = document.getElementById("progress-bar-container");
+        const status = document.getElementById("progress-text");
+
+        // Update progress bar and status based on server response
+        if (data.status === "downloading") {
+          container.style.display = "block";
+
+          // Extract numeric percentage from the response
+          const rawPercent = data.percent;
+          const numMatch = rawPercent.match(/\d+(\.\d+)?/);
+          const percentNum = numMatch ? numMatch[0] : "0";
+
+          bar.style.width = percentNum + "%";
+          status.textContent = `Downloading: ${
+            data.title || ""
+          } - ${percentNum}%`;
+        } else if (data.status === "done") {
+          // Handle download completion
+          status.textContent = "Download Complete!";
+          bar.style.width = "100%";
+          clearInterval(progressInterval);
+        } else if (data.status === "error") {
+          // Handle download error
+          status.textContent = `Error: ${data.error}`;
+          bar.style.background = "red";
+          clearInterval(progressInterval);
+        }
+      });
+  };
+
+  // Function to handle form submission and start the download
+  function startDownload(event) {
+    event.preventDefault(); // Prevent default form submission behavior
+
+    const formData = new FormData(form); // Collect form data
+    console.log("Downloading Form:", form); // Debugging log
+    progressInterval = setInterval(pollProgress, 1000); // Start polling progress every second
+
+    const container = document.getElementById("content-container");
+
+    // Send POST request to the server with form data
+    fetch("/", {
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => res.text())
+      .then((html) => {
+        // Replace current page content with the returned HTML
+        if (container) {
+          container.innerHTML = html;
+        } else {
+          console.error("content-container not found!");
+        }
+      })
+      .catch((error) => {
+        // Handle errors during the fetch request
+        console.error("Download failed", error);
+        clearInterval(progressInterval);
+      });
+  }
+</script>
 {% endblock %}
