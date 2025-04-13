@@ -67,3 +67,5 @@ def is_playlist(url):
         except Exception as e:
             print(f"Error detecting playlist: {e}")
             return False
+
+run_terminal_app()

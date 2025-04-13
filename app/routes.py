@@ -4,6 +4,7 @@ import yt_dlp
 import os
 import re
 import threading  # Import threading to handle background tasks
+from modules.playlist import is_playlist  # Import the is_playlist function from the modules
 
 # Create a Flask Blueprint for the main routes
 main = Blueprint("main", __name__)
@@ -100,6 +101,13 @@ def home():
         restrictfilenames = "restrictfilenames" in request.form
         keep_original = "keep_original" in request.form
 
+        if is_playlist(url):
+            return render_template(
+                "index.html",
+                success=None,
+                error="Playlist detected. Please provide a single video URL. Playlists are not supported."
+            )
+    
         # Start the download in a background thread
         thread = threading.Thread(
             target=run_download,
@@ -267,3 +275,5 @@ def download_video(
 @main.route("/progress")
 def get_progress():
     return jsonify(download_progress)
+
+
