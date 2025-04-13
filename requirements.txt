@@ -1,0 +1,4 @@
+Flask
+yt-dlp
+Flask-Cors        # If using CORS across different frontends
+python-dotenv     # If you're using a .env file for config

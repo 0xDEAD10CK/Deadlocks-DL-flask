@@ -197,6 +197,7 @@ def download_video(
         "outtmpl": output_template,
         "quiet": True,
         "noplaylist": True,
+        "concurrent_fragment_download": 10,
         "progress_hooks": [hook],
     }
 
