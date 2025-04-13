@@ -96,6 +96,7 @@ def home():
         thumbnail = "thumbnail" in request.form
         audio_only = "audio_only" in request.form
         custom_filename = request.form.get("custom_filename", "").strip()
+        custom_folder = request.form.get("custom_dir", "").strip()
         resolution = request.form.get("resolution")
         chapters = "chapters" in request.form
         restrictfilenames = "restrictfilenames" in request.form
@@ -119,6 +120,7 @@ def home():
                 thumbnail,
                 audio_only,
                 custom_filename,
+                custom_folder,
                 resolution,
                 chapters,
                 restrictfilenames,
@@ -147,6 +149,7 @@ def download_video(
     thumbnail,
     audio_only=False,
     custom_filename="",
+    custom_folder="",
     resolution="",
     chapters=False,
     restrictfilenames=False,
